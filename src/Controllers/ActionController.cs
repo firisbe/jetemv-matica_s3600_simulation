@@ -179,7 +179,7 @@ namespace MaticaS3600Simulation.Controllers
                 Answer = "OK"
               };
               break;
-            case "chipreset":
+            case "ChipReset":
               this._logger.LogInformation("Chip reset called!");
               string errMsg3;
               if (PCSCReader.ColdReset(out atr, out errMsg3))
@@ -203,7 +203,7 @@ namespace MaticaS3600Simulation.Controllers
               };
               break;
             default:
-              this._logger.LogError("Invalid command!!!!");
+              this._logger.LogError($"Invalid command!!!! {body.Command}");
               commandResponse2 = new CommandResponse()
               {
                 Answer = "KO",
