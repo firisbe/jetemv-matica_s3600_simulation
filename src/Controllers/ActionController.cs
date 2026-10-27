@@ -69,6 +69,7 @@ namespace MaticaS3600Simulation.Controllers
               break;
             case "EjectCard":
               this._logger.LogInformation("Eject Card called!");
+              StaticValues.CardInside = false;
               commandResponse2 = new CommandResponse()
               {
                 Answer = "OK"
@@ -89,10 +90,15 @@ namespace MaticaS3600Simulation.Controllers
                 Answer = "OK",
                 Machine_Configuration = new MachineConfiguration(),
                 Machine_Status = new MachineStatus()
+                {
+                  card_inside = StaticValues.CardInside ? "yes" : "no"
+                }
               };
+              this._logger.LogInformation("Get Info Json -> card_inside: {cardInside}", StaticValues.CardInside ? "yes" : "no");
               break;
             case "LoadCard":
               this._logger.LogInformation("Load Card called!");
+              StaticValues.CardInside = true;
               commandResponse2 = new CommandResponse()
               {
                 Answer = "OK"
@@ -133,6 +139,10 @@ namespace MaticaS3600Simulation.Controllers
               break;
             case "Print":
               this._logger.LogInformation("Print called!");
+              this._logger.LogInformation("Print active contrast -> black: {black}, color: {color}, overlay: {overlay}",
+                StaticValues.BlackContrast ?? "(set edilmedi)",
+                StaticValues.ColorContrast ?? "(set edilmedi)",
+                StaticValues.OverlayContrast ?? "(set edilmedi)");
               commandResponse2 = new CommandResponse()
               {
                 Answer = "OK",
@@ -164,8 +174,55 @@ namespace MaticaS3600Simulation.Controllers
                 Data = str2
               };
               break;
+            case "JobSettings":
+              this._logger.LogInformation("JobSettings called! black: {black}, color: {color}, overlay: {overlay}",
+                body.blackContrast ?? "(gönderilmedi)",
+                body.colorContrast ?? "(gönderilmedi)",
+                body.overlayContrast ?? "(gönderilmedi)");
+
+              // SDK: "The range is from 0 to 15". Geçersiz değerde KO dönülür (hata kodu simülatöre özel).
+              string invalidContrast = null;
+              foreach (var (name, value) in new[]
+              {
+                ("blackContrast", body.blackContrast),
+                ("colorContrast", body.colorContrast),
+                ("overlayContrast", body.overlayContrast)
+              })
+              {
+                if (value != null && (!int.TryParse(value, out int contrast) || contrast < 0 || contrast > 15))
+                {
+                  invalidContrast = $"{name}='{value}'";
+                  break;
+                }
+              }
+
+              if (invalidContrast != null)
+              {
+                this._logger.LogError("JobSettings invalid contrast value: {value}. Range is 0-15.", invalidContrast);
+                commandResponse2 = new CommandResponse()
+                {
+                  Answer = "KO",
+                  Error = new ErrorResponse()
+                  {
+                    Code = "1002",
+                    Message = $"Invalid contrast value: {invalidContrast}. Range is 0-15."
+                  }
+                };
+                break;
+              }
+
+              // Gönderilmeyen alan önceki değerini korur.
+              StaticValues.BlackContrast = body.blackContrast ?? StaticValues.BlackContrast;
+              StaticValues.ColorContrast = body.colorContrast ?? StaticValues.ColorContrast;
+              StaticValues.OverlayContrast = body.overlayContrast ?? StaticValues.OverlayContrast;
+              commandResponse2 = new CommandResponse()
+              {
+                Answer = "OK"
+              };
+              break;
             case "Restore":
               this._logger.LogInformation("Restore called!");
+              StaticValues.CardInside = false;
               commandResponse2 = new CommandResponse()
               {
                 Answer = "OK"

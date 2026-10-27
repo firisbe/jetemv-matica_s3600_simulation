@@ -39,5 +39,15 @@ namespace MaticaS3600Simulation.Models
         public string Rear_Color { get; set; }
         public string Rear_Black { get; set; }
         public string Rear_Overlay { get; set; }
+
+        // JobSettings (Matica SDK JSON v1.4.2, bölüm 2.12): aralık 0-15, yalnızca S3600.
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string blackContrast { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string colorContrast { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string overlayContrast { get; set; }
     }
 }
